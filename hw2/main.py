@@ -26,7 +26,7 @@ def get_metric(metric, approxer, A, s, **kwargs):
     results = tc.FloatTensor(results)
     return results.mean() , results.std()
 
-def main(precondition, figname):
+def main():
     plt.figure( figsize = (16 , 16) , dpi = 128 )
     plt.style.use('ggplot')
 
@@ -37,40 +37,36 @@ def main(precondition, figname):
         )):
             print (gene_idx , metric_idx)
 
-            sb = None # ensure name
-            if not precondition:
-                if metric_idx == 0: # skip Sketch and Solve
-                    continue
-                sb = plt.subplot( 3,2 , gene_idx * 2 + metric_idx)
-            else:
-                sb = plt.subplot( 3,3 , gene_idx * 3 + metric_idx + 1 )
+            sb = plt.subplot( 3,3 , gene_idx * 3 + metric_idx + 1 )
 
             sb.set_title("%s + %s" % (generator_name , metric_name))
             A = generator(n , d)
             for approx_idx , (approxer , approxer_name) in enumerate( zip(
                 [ rade_sketch_1 , rade_sketch_2 , leverage_score_sketch ] , 
-                [ "Sparse Rademacher sketch" , "Sparser Rademacher sketch" , "Leverage Score Sampling"]
+                [ "Sparse Rademacher sketch $q=0.1$" , "Sparse Rademacher sketch $q=0.01$" , "Leverage Score Sampling"]
             )):
                 mean_results = []
                 std_results = []
                 for s in tqdm( ss ):
-                    if metric_name in["Iteration Complexity" , "Condition Number"]:
-                        mean, std = get_metric(metric, approxer , A, s, precondition = precondition)
-                    else:
-                        mean, std = get_metric(metric, approxer , A, s)
+                    mean, std = get_metric(metric, approxer , A, s)
                     mean_results.append(mean)
                     std_results .append(std )
 
                 plt.plot( ss , mean_results , label = approxer_name)                    
                 # plt.fill_between( x , means[:,1] - std[:,1] , means[:,1] + std[:,1])
+            
+            if metric_name in["Iteration Complexity" , "Condition Number"]:
+                S = approxer(A , 1)
+                ref_res = metric(A, S, precondition = False) # a reference without precondition
+                plt.plot( ss , [ref_res for _ in ss] , label = "w/o pre-conditioning")         
+
 
             plt.xlabel("s")
             plt.ylabel(metric_name)
             plt.legend()
 
     plt.tight_layout()
-    plt.savefig( figname )
+    plt.savefig( "result" )
                 
 if __name__ == "__main__":
-    main(False, "result_without_precond")
-    main(True, "result_with_precond")
+    main()

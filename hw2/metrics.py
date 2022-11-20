@@ -36,7 +36,7 @@ def sketch_and_solve(A, S):
 
 
 
-def iteration_complexity(A,S, precondition):
+def iteration_complexity(A,S, precondition = True):
     n, d = A.size()
     b = get_b(A)
 
@@ -63,7 +63,7 @@ def iteration_complexity(A,S, precondition):
     
     return iteration_num
     
-def condition_number(A,S,precondition):
+def condition_number(A,S,precondition = True):
     n, d = A.size()
     b = get_b(A)
 
