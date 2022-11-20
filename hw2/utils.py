@@ -32,7 +32,7 @@ def rade_sketch_1(A , s):
     q = 0.1
     
     B = (tc.rand(s , n) < q).float() # bernuli
-    R = ((tc.rand(s , n) < q).float() * 2 - 1 ) # rade
+    R = ((tc.rand(s , n) < 0.5).float() * 2 - 1 ) # rade
     S = B * R * ( (q*s) ** -0.5 ) 
     
     return S
@@ -42,12 +42,12 @@ def rade_sketch_2(A , s):
     q = 0.01
     
     B = (tc.rand(s , n) < q).float() # bernuli
-    R = ((tc.rand(s , n) < q).float() * 2 - 1 ) # rade
+    R = ((tc.rand(s , n) < 0.5).float() * 2 - 1 ) # rade
     S = B * R * ( (q*s) ** -0.5 ) 
     
     return S
 
-def leverage_score_sampling(A , s):
+def leverage_score_sketch(A , s):
     n , d = A.size()
 
     r = tc.linalg.matrix_rank(A)
@@ -64,35 +64,3 @@ def leverage_score_sampling(A , s):
 
     return S
 
-
-if __name__ == "__main__":
-    A = tc.randn(128,16)
-    leverage_score_sampling(A , 12)
-    
-
-# ---------- metrics ----------
-
-def Fnorm(P):
-    return (P ** 2).sum() ** 0.5
-
-def spectral_norm(P):
-    try: 
-        res = tc.linalg.eigvalsh(P + 1e-6).abs().max()
-    except tc._C._LinAlgError: 
-        print ("fuck!")
-        x = tc.randn(P.size(0))
-        res = float( (x.t() @ P @ x) / (Fnorm(x)**2) )
-    return res
-
-def metric_F(AA , TAA):
-    '''TAA: approximated A.t() @ A'''
-    return Fnorm(TAA - AA) / Fnorm(AA)
-
-def metric_spectral(AA , TAA):
-    return spectral_norm(TAA - AA) / spectral_norm(AA)
-
-def metric_spectral_approx(AA , TAA):
-    d = AA.size(0)
-    L , U = tc.linalg.eigh(AA) # AA = U @ L.diag() @ U.t()
-    AAhalfinv = U @ ((L + 1e-6) ** -0.5).diag() @ U.t()
-    return spectral_norm(AAhalfinv @ TAA @ AAhalfinv - tc.eye(d,d))
